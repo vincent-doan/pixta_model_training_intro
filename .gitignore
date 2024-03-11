@@ -1,3 +1,7 @@
 .venv/
 pascal_voc_2007_data/
-pascal_voc_2007_data.zip
+__pycache__/
+runs/
+filters/
+labels/
+checkpoint/
