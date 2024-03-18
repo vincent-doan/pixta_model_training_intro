@@ -19,7 +19,9 @@ class ResNet50(nn.Module):
         self.model = nn.Sequential(
             self.pretrained_model,
             nn.ReLU(),
-            nn.Linear(hidden_size, output_size),
+            nn.Linear(hidden_size, 2*hidden_size),
+            nn.ReLU(),
+            nn.Linear(2*hidden_size, output_size),
         )
     
     def forward(self, x):
