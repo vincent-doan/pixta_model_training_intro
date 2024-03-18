@@ -1,7 +1,8 @@
 import torch
 from pascal_voc_dataset import PascalVOCDataset
+from torchvision import transforms
 from torchvision.models import ResNet50_Weights
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, ConcatDataset
 from torch import nn, optim
 
 from model import *
@@ -23,14 +24,28 @@ def main():
     parser.add_argument('--num_epochs', help='Input number of epochs', default=10)
     args = parser.parse_args()
 
-    # DATA
-    train_dataset = PascalVOCDataset(images_path='pascal_voc_2007_data/voctrainval_06-nov-2007/VOCdevkit/VOC2007/JPEGImages/',
-                                    labels_path='labels/processed_train_labels.csv',
-                                    preprocess=ResNet50_Weights.IMAGENET1K_V2.transforms(antialias=False))
-    train_dataloader = DataLoader(train_dataset, batch_size=int(args.batch_size), shuffle=True)
+    random_horizontal_flip = transforms.RandomHorizontalFlip(p=0.5)
+    random_rotation = transforms.RandomRotation(degrees=30)
+    color_jitter = transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2)
+    random_affine = transforms.RandomAffine(degrees=20, translate=(0.1, 0.1), scale=(0.8, 1.2))
 
-    val_dataset = PascalVOCDataset(images_path='pascal_voc_2007_data/voctrainval_06-nov-2007/VOCdevkit/VOC2007/JPEGImages/',
-                                labels_path='labels/processed_val_labels.csv',
+    my_transforms = transforms.Compose([
+        random_horizontal_flip,
+        random_rotation,
+        color_jitter,
+        random_affine
+    ])
+
+    # DATA
+    train_dataset_transformed = PascalVOCDataset(images_path='pascal_voc_2007_data/voctrainval_06-nov-2007/VOCdevkit/VOC2007/JPEGImages/',
+                                                 labels_path='labels/processed_trainval_labels.csv',
+                                                 transforms=my_transforms,
+                                                 preprocess=ResNet50_Weights.IMAGENET1K_V2.transforms(antialias=False))
+    train_dataloader = DataLoader(train_dataset_transformed, batch_size=int(args.batch_size), shuffle=True)
+
+    val_dataset = PascalVOCDataset(images_path='pascal_voc_2007_data/voctest_06-nov-2007/VOCdevkit/VOC2007/JPEGImages/',
+                                labels_path='labels/processed_test_labels.csv',
+                                transforms=None,
                                 preprocess=ResNet50_Weights.IMAGENET1K_V2.transforms(antialias=False))
     val_dataloader = DataLoader(val_dataset, batch_size=int(args.batch_size), shuffle=False)
 
