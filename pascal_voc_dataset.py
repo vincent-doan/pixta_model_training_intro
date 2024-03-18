@@ -6,7 +6,7 @@ from torchvision.transforms import ToTensor
 from PIL import Image
 
 class PascalVOCDataset(Dataset):
-    def __init__(self, images_path:str, labels_path:str, preprocess):
+    def __init__(self, images_path:str, labels_path:str, transforms, preprocess):
         # LABELS
         df = pd.read_csv(labels_path, index_col=0)
         keys = df.index.tolist()
@@ -19,6 +19,7 @@ class PascalVOCDataset(Dataset):
         self.images_path = [images_path + path for path in sorted(os.listdir(images_path)) if path in self.image_path_to_label_dict]
 
         # PREPROCESS
+        self.transforms = transforms
         self.preprocess = preprocess
     
     def __getitem__(self, idx):
@@ -28,6 +29,8 @@ class PascalVOCDataset(Dataset):
 
         image = Image.open(path)
         image = ToTensor()(image)
+        if self.transforms:
+            image = self.transforms(image)
         image = self.preprocess(image)
 
         return image, label
