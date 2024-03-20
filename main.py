@@ -22,6 +22,8 @@ def main():
     parser.add_argument('--step_size', help='Input step size', default=10)
     parser.add_argument('--gamma', help='Input gamma', default=0.3)
     parser.add_argument('--num_epochs', help='Input number of epochs', default=10)
+    parser.add_argument('--continue_training', help='Choose whether to continue from a checkpoint', default=False)
+    parser.add_argument('--checkpoint', help='Choose whether to use best or latest checkpoint', default='best')
     args = parser.parse_args()
 
     random_horizontal_flip = transforms.RandomHorizontalFlip(p=0.5)
@@ -53,16 +55,22 @@ def main():
     model = ResNet50(hidden_size=int(args.hidden_size), output_size=20, transfer=args.transfer)
 
     # TRAINER
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     loss_fn = WeightedBCELoss(scale=int(args.pos_scale), reduction='sum')
     optimizer = optim.Adam(model.parameters(), lr=float(args.learning_rate), betas=(0.9, 0.999), eps=1e-08)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=int(args.step_size), gamma=float(args.gamma))
 
     trainer = Trainer(model, train_dataloader, val_dataloader,
-                    loss_fn=loss_fn,
-                    optimizer=optimizer,
-                    scheduler=scheduler,
-                    device=device)
+                      loss_fn=loss_fn,
+                      optimizer=optimizer,
+                      scheduler=scheduler,
+                      device=device)
+
+    if args.continue_training:
+        if args.checkpoint == 'best':
+            trainer.load_model('checkpoint/best_model_checkpoint.pth')
+        elif args.checkpoint == 'last':
+            trainer.load_model('checkpoint/last_model_checkpoint.pth')     
 
     trainer.train(num_epochs=int(args.num_epochs))
 

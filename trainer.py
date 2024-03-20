@@ -52,8 +52,9 @@ class Trainer:
         torch.save(checkpoint, checkpoint_path)
 
     def load_model(self, checkpoint_path):
-        checkpoint = torch.load(checkpoint_path)
+        checkpoint = torch.load(checkpoint_path, map_location=self.device)
         self.model.load_state_dict(checkpoint['model'])
+        self.model.to(self.device)
         self.optimizer.load_state_dict(checkpoint['optimizer'])
         self.scheduler.load_state_dict(checkpoint['scheduler'])
         return checkpoint['epoch'], checkpoint['train_loss'], checkpoint['valid_loss']
